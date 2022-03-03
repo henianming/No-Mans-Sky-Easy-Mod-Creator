@@ -1,0 +1,13 @@
+[VERSION]: MBINCompiler v3.82.0.1
+[ARGS]: "convert" "-d" ".\output\MBIN_m" ".\output\EXML"
+
+If you encounter any errors, please submit a bug report and include this log file.
+Please check that there isn't already a similar issue open before creating a new one.
+https://github.com/monkeyman192/MBINCompiler/issues
+
+[INFO]: Auto-Detected --input-format=EXML
+[INFO]: --input-format=EXML --output-format=MBIN
+
+[INFO]: 3 files converted.
+
+[INFO]: TIME: 0.332 seconds
