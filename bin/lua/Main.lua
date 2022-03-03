@@ -1,11 +1,20 @@
 local config = {
     --原始EXML所在根目录
-    rawRootPath = [[E:\MyProject\raw]],
+    rawRootPath = [[E:\raw]],
     --中间临时文件存放路径
     tempRootPath = [[output]],
     --最后输出mod pak文件的路径
-    outputRootPath = [[F:\公交补充\output.pak]]
+    outputFilePath = [[F:\output.pak]],
+    --是否备份
+    backup = false,
+    --是否需要原始文件EXML
+    needRaw = true
 }
+
+local tempRawMBINRoot = config.tempRootPath .. "/MBIN"
+local tempModifyMBINRoot = config.tempRootPath .. "/MBIN_m"
+local tempRawEXMLRoot = config.tempRootPath .. "/EXML"
+local tempModifyEXMLRoot = config.tempRootPath .. "/EXML_m"
 
 json = require("json")
 
@@ -73,41 +82,53 @@ for i = 1, fileArr.Length, 1 do
     end
 end
 
---print(json.encode(totalModify))
-
 Log("获取原始游戏文件")
 
 Program.InitDirectory(config.tempRootPath)
 
 for k, v in pairs(totalModify) do
-    Program.GetFile(config.rawRootPath, config.tempRootPath, v.file)
+    Program.GetFile(config.rawRootPath, tempRawMBINRoot, v.file)
 end
 
 Log("MBINCompiler解码")
 
-os.execute([[.\tool\MBINCompiler.exe convert -d .\]] .. config.tempRootPath .. [[\EXML .\]] .. config.tempRootPath .. [[\MBIN]])
+if config.needRaw == true then
+    os.execute([[.\tool\MBINCompiler.exe convert -d .\]] .. tempRawEXMLRoot .. [[ .\]] .. tempRawMBINRoot)
+end
+os.execute([[.\tool\MBINCompiler.exe convert -d .\]] .. tempModifyEXMLRoot .. [[ .\]] .. tempRawMBINRoot)
 
 Log("写入mod修改")
 for k, v in pairs(totalModify) do
     for kk, vv in pairs(v.modify) do
         if vv.valueFunction == nil then
-            Program.DoModify("./" .. config.tempRootPath .. "/EXML/" .. v.file, json.encode(vv))
+            Program.DoModify("./" .. tempModifyEXMLRoot .. "/" .. v.file, json.encode(vv))
         else
             local func = vv.valueFunction
             vv.valueFunction = nil
-            Program.DoModifyF("./" .. config.tempRootPath .. "/EXML/" .. v.file, json.encode(vv), func)
+            Program.DoModifyF("./" .. tempModifyEXMLRoot .. "/" .. v.file, json.encode(vv), func)
         end
     end
 end
 
 Log("MBINCompiler编码")
-os.execute([[.\tool\MBINCompiler.exe convert -d .\]] .. config.tempRootPath .. [[\MBIN_m .\]] .. config.tempRootPath .. [[\EXML]])
+os.execute([[.\tool\MBINCompiler.exe convert -d .\]] .. tempModifyMBINRoot .. [[ .\]] .. tempModifyEXMLRoot)
 
 Log("压缩生成pak")
 
-local fileListString = Program.GetPackFileListStr("./" .. config.tempRootPath .. "/MBIN_m")
+local fileListString = Program.GetPackFileListStr(tempModifyMBINRoot)
 os.execute([[.\tool\PSArcTool.exe ]] .. fileListString)
 
 Program.Sleep(0.2)
 
-File.Move("./" .. config.tempRootPath .. "/MBIN_m/psarc.pak", config.outputRootPath)
+if File.Exists(config.outputFilePath) == true then
+    if config.backup == true then
+        local oldFilePath = config.outputFilePath .. "-old-" .. os.time()
+        File.Move(config.outputFilePath, oldFilePath)
+        Program.Log("备份旧mod至" .. oldFilePath, ConsoleColor.Yellow)
+    else
+        File.Delete(config.outputFilePath)
+        Program.Log("删除旧mod", ConsoleColor.Yellow)
+    end
+end
+File.Move(tempModifyMBINRoot .. "/psarc.pak", config.outputFilePath)
+Program.Log("已生成mod至" .. config.outputFilePath, ConsoleColor.Yellow)

@@ -45,7 +45,7 @@ public static class Program {
 		string subPath
 	) {
 		FileInfo fiRaw = new FileInfo($"{rawRootPath}/{subPath}");
-		FileInfo fiTarget = new FileInfo($"{targetRootPath}/MBIN/{subPath}");
+		FileInfo fiTarget = new FileInfo($"{targetRootPath}/{subPath}");
 		if (fiRaw.Exists == false) {
 			Console.WriteLine($"原始文件不存在{fiRaw}");
 		}
@@ -344,7 +344,7 @@ public static class Program {
 
 		xml.Save(path);
 
-		Console.WriteLine($"{new FileInfo(path).FullName}--->{targetArr.Length}处修改");
+		Console.WriteLine($"{new FileInfo(path).FullName}({modifyArr.selector})--->{targetArr.Length}处修改");
 	}
 
 	public static void DoModifyF(string path, string json, LuaFunction valueFunction) {
@@ -365,7 +365,7 @@ public static class Program {
 
 		xml.Save(path);
 
-		Console.WriteLine($"{new FileInfo(path).FullName}--->{targetArr.Length}处修改");
+		Console.WriteLine($"{new FileInfo(path).FullName}({modifyArr.selector})--->{targetArr.Length}处修改");
 	}
 }
 
